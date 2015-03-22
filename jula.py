@@ -1,11 +1,10 @@
 from RPIO import PWM
-import sys, getopt, time
+import getopt, time
 
-t = 0
-pin = 18
+pin = 4
 T = 250
 
-def send(data):
+def sendData(data):
         t = 0
 	t += START(t)
         for x in data:
@@ -16,6 +15,7 @@ def send(data):
 			t += ONE(t)
 			t += ZERO(t)
         t += STOP(t)
+
 	return t
 
 
@@ -35,28 +35,25 @@ def write(wait, t):
 	PWM.add_channel_pulse(0, pin, t, T)
         return T*wait
 
+def send(unit, command):
+        # Setup PWM and DMA channel 0
+        PWM.setup(1, 0)
+        cycle_length = 110000
+        PWM.init_channel(0, cycle_length)
+
+        data = "0100 1000 0110 1001 1111 1111 100" +command +" " +unit
+        for i in xrange(3):
+                sendData(data)
+                time.sleep(0.1)
+	print data
+
+
+        PWM.clear_channel_gpio(0, pin)
+
+        # Shutdown all PWM and DMA activity
+        PWM.cleanup()
+
+
+	return True
 	
-
-# Setup PWM and DMA channel 0
-PWM.setup(1, 0)
-cycle_length = 110000
-PWM.init_channel(0, cycle_length)
-# Add some pulses to the subcycle
-
-command = str(sys.argv[1])
-
-t = 0
-pin = 4
-T = 250
-
-data = "0100 1000 0110 1001 1111 1111 100" +command +"1101"
-
-for i in xrange(3):
-	send(data)
-	time.sleep(0.1)	
-
-PWM.clear_channel_gpio(0, pin)
-
-# Shutdown all PWM and DMA activity
-PWM.cleanup()
 
