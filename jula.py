@@ -36,12 +36,13 @@ def write(wait, t):
         return T*wait
 
 def send(unit, command):
+	unit = "{:04b}".format(unit)
         # Setup PWM and DMA channel 0
         PWM.setup(1, 0)
         cycle_length = 110000
         PWM.init_channel(0, cycle_length)
 
-        data = "0100 1000 0110 1001 1111 1111 100" +command +" " +unit
+        data = "0100 1000 0110 1001 1111 1111 100" +str(command) +" " +unit
         for i in xrange(3):
                 sendData(data)
                 time.sleep(0.1)
