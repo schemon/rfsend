@@ -1,6 +1,7 @@
 from ws4py.client.threadedclient import WebSocketClient
 import jula
 import json
+import time
 
 class DummyClient(WebSocketClient):
     def opened(self):
@@ -30,7 +31,8 @@ class DummyClient(WebSocketClient):
 
 if __name__ == '__main__':
     try:
-        ws = DummyClient('ws://infinite-refuge-5280.herokuapp.com/room/chat?username=pi2')
+	name = "pi-" +str(time.time())
+        ws = DummyClient('ws://infinite-refuge-5280.herokuapp.com/room/chat?username=' +name)
         ws.connect()
         ws.run_forever()
     except KeyboardInterrupt:
