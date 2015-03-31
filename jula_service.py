@@ -2,7 +2,7 @@ import urllib2
 import json
 import jula
 
-url = "https://dl.dropboxusercontent.com/u/1277351/api/jula.json"
+url = "http://192.168.0.12/command"
 data = urllib2.urlopen(url).read()
 d = json.loads(data)
 

@@ -38,9 +38,24 @@ def write(wait, t):
 def send(unit, command):
 	unit = "{:04b}".format(unit)
         # Setup PWM and DMA channel 0
-        PWM.setup(1, 0)
-        cycle_length = 110000
-        PWM.init_channel(0, cycle_length)
+
+	PWM.set_loglevel(PWM.LOG_LEVEL_ERRORS)
+
+        if PWM.is_setup():
+		print "setuped"
+                #PWM.cleanup()
+	else:
+		print "not setuped"
+		PWM.setup(1, 0)
+
+	if PWM.is_channel_initialized(0):
+		print "was init"
+        	#PWM.clear_channel_gpio(0, pin)
+		#PWM.clear_channel(0)
+	else:
+		print "not init" 
+		cycle_length = 110000
+        	PWM.init_channel(0, cycle_length)
 
         data = "0100 1000 0110 1001 1111 1111 100" +str(command) +" " +unit
         for i in xrange(3):
@@ -48,13 +63,10 @@ def send(unit, command):
                 time.sleep(0.1)
 	print data
 
-
         PWM.clear_channel_gpio(0, pin)
-
-        # Shutdown all PWM and DMA activity
-        PWM.cleanup()
-
 
 	return True
 	
-
+def cleanup():
+	PWM.cleanup()
+	return True
