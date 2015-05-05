@@ -58,6 +58,7 @@ def send(unit, command):
         	PWM.init_channel(0, cycle_length)
 
         data = "0100 1000 0110 1001 1111 1111 100" +str(command) +" " +unit
+	data = "0010 0000 0001 0010 0110 1011 100" +str(command) +" " +unit
         for i in xrange(3):
                 sendData(data)
                 time.sleep(0.1)
