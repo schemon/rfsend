@@ -30,15 +30,16 @@ class DummyClient(WebSocketClient):
 	if "on" in msg: 
                 if "clas" in msg:
                         clas.send(0, 1)
-                else:
+			self.send("Lights should be bright!")
+                elif msg == "on":
                         jula.send(0, 1)
-		self.send("Lights should be bright!")	
+			self.send("Lights should be bright!")	
 		print "got " +msg
 		
 	if "off" in msg:
 		if "clas" in msg:
 			clas.send(0, 0)
-		else:	 
+		elif msg == "off":	 
 			jula.send(0, 0)
 		print "got " +msg
 		self.send("Ok, lights dark  now...")
