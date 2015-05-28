@@ -12,8 +12,9 @@ def sendData(data, command, dry = False):
 			for c in command[x]:
 				value = str(c['v'])
 				usec = c['u']
-				if value == 'H': t = HIGH(usec, t, dry)
-				if value == 'L': t = LOW(usec, t, dry)
+				print value, usec
+				if value == 'h': t = HIGH(usec, t, dry)
+				if value == 'l': t = LOW(usec, t, dry)
 		elif command != ' ':
 			print 'Missing ', x
 	return t
@@ -50,9 +51,8 @@ def send(command):
 	cmd = json.loads('{"1": [{"v":"H", "u":1000}, {"v":"L","u":500}], "0": [{"v":"H", "u":500}, {"v":"L","u":1000}], "S": [{"v":"H", "u":2600}, {"v":"L","u":7250}]}')
         data = data + data +data
 
-	raw = json.loads(command)
-	data = raw['payload']
-	cmd = raw['command']
+	data = command['payload']
+	cmd = command['command']
 
         # Setup PWM and DMA channel 0
 
