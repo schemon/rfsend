@@ -38,7 +38,7 @@ def send(command):
 
         # Setup PWM and DMA channel 0
 
-	PWM.set_loglevel(PWM.LOG_LEVEL_DEBUG)
+	#PWM.set_loglevel(PWM.LOG_LEVEL_DEBUG)
 
         if PWM.is_setup():
 		print "setuped"

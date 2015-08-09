@@ -7,6 +7,8 @@ import socket
 import syslog
 import logging
 import logging.handlers
+from hashlib import *
+import hmac
 
 class DummyClient(WebSocketClient):
     def run(self):
@@ -18,10 +20,14 @@ class DummyClient(WebSocketClient):
 		print str(msg)
 
     def send(self, m, binary=False):
-	m = json.dumps({"text": str(m)})
-        print "sent: " +m
+        print "sent: " +str(m)
         super(DummyClient, self).send(m)
+    def talk(self, m):
+        m = json.dumps({"event":"client-talk","data":m,"channel":"presence-rpi"})
+        self.send(m)
     def opened(self):
+	#im = json.dumps({"event":"pusher:subscribe","data":{"channel":"presence-rpi"}})
+        #self.send(m)
         #def data_provider():
         #    for i in range(1, 200, 25):
         #        yield "#" * i
@@ -36,28 +42,45 @@ class DummyClient(WebSocketClient):
     def received_message(self, m):
         print m
 	d = json.loads(str(m))
-	if str(d["message"]) != "beep":
-		syslog.syslog(str(m))
-	msg = str(d["message"]).lower()
+
+	event = d["event"]
+	data = json.loads(d["data"])
 	try:
-		self.handleJsonMessage(json.loads(msg))
+		#self.handleJsonMessage(json.loads(data))
+        	print 'handled'
 	except ValueError: 
 		print 'not json'		
 	
-	print "got " +msg
+        msg = "empty"
 	
+
+        if event == 'pusher:connection_established':
+		print type(data)
+        	socket_id = data['socket_id']
+        	print 'socket_id ' +socket_id
+		string_to_sign = socket_id +':private-rpi'
+		secret = '76a57ea82e311bcbbb1f'
+		digest = hmac.new(secret, string_to_sign, sha256).hexdigest()
+                print 'digest ', digest
+        	key = '599cb5ed77cd5efb659a'
+        	auth = key +':' +digest
+                m = json.dumps({"event":"pusher:subscribe","data":{"channel":"private-rpi", "auth":auth}})
+        	self.send(m)
 	if msg == "ok":
-		self.send("Okidoki...")
+		self.talk("Okidoki...")
 	if msg == "hi": 
 		1/0
-		self.send("oh herro!")
-	if msg == "rpi": self.send("yes?")
-	if msg == "hello": self.send("hi!")
+		self.talk("oh herro!")
+	if msg == "rpi": self.talk("yes?")
+	if msg == "hello": self.talk("hi!")
 
     def handleJsonMessage(self, command):
 	print command
-	all.send(command)
-        self.send("Command handled")
+	if 'payload' in command:
+		all.send(command)
+        	self.talk("Command handled")
+        else:
+        	self.talk("Unknwon command")
 
 if __name__ == '__main__':
 	# Setup syslog handler
@@ -71,7 +94,7 @@ if __name__ == '__main__':
 		syslog.syslog('connecting')
 		try:
 			name = "rpi"
-        		ws = DummyClient('ws://infinite-refuge-5280.herokuapp.com/room/chat?username=' +name, None, None, 30)
+        		ws = DummyClient('ws://ws.pusherapp.com:80/app/599cb5ed77cd5efb659a?protocol=7&client=rpi&version=0.0.1', None, None, 30)
         		ws.connect()
         		ws.run_forever()
     		except KeyboardInterrupt:
