@@ -13,8 +13,8 @@ def sendData(data, command, dry = False):
 				value = str(c['v'])
 				usec = c['u']
 				print value, usec
-				if value == 'h': t = HIGH(usec, t, dry)
-				if value == 'l': t = LOW(usec, t, dry)
+				if value.lower() == 'h': t = HIGH(usec, t, dry)
+				if value.lower() == 'l': t = LOW(usec, t, dry)
 		elif command != ' ':
 			print 'Missing ', x
 	return t

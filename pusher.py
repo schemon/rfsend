@@ -46,7 +46,7 @@ class DummyClient(WebSocketClient):
 	event = d["event"]
 	data = json.loads(d["data"])
 	try:
-		#self.handleJsonMessage(json.loads(data))
+		self.handleJsonMessage(data)
         	print 'handled'
 	except ValueError: 
 		print 'not json'		
@@ -74,13 +74,15 @@ class DummyClient(WebSocketClient):
 	if msg == "rpi": self.talk("yes?")
 	if msg == "hello": self.talk("hi!")
 
-    def handleJsonMessage(self, command):
-	print command
-	if 'payload' in command:
-		all.send(command)
-        	self.talk("Command handled")
+    def handleJsonMessage(self, data):
+	print data
+	if 'message' in data:
+        	print 'found command: ', data['message']
+		all.send(data['message'])
+        	#self.talk("Command handled")
         else:
-        	self.talk("Unknwon command")
+        	print 'did not find anything'
+        	#self.talk("Unknwon command")
 
 if __name__ == '__main__':
 	# Setup syslog handler
@@ -94,7 +96,7 @@ if __name__ == '__main__':
 		syslog.syslog('connecting')
 		try:
 			name = "rpi"
-        		ws = DummyClient('ws://ws.pusherapp.com:80/app/599cb5ed77cd5efb659a?protocol=7&client=rpi&version=0.0.1', None, None, 30)
+        		ws = DummyClient('ws://ws.pusherapp.com:80/app/599cb5ed77cd5efb659a?protocol=7&client=rpi&version=0.0.1')
         		ws.connect()
         		ws.run_forever()
     		except KeyboardInterrupt:
