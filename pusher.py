@@ -7,8 +7,7 @@ import socket
 import syslog
 import logging
 import logging.handlers
-from hashlib import *
-import hmac
+import urllib2
 
 class DummyClient(WebSocketClient):
     def run(self):
@@ -20,26 +19,21 @@ class DummyClient(WebSocketClient):
 		print str(msg)
 
     def send(self, m, binary=False):
-        print "sent: " +str(m)
-        super(DummyClient, self).send(m)
+        if str(m) == 'beep': 
+        	m = self.talk(str(m))
+        else:
+        	print "sent: " +str(m)
+        	super(DummyClient, self).send(m)
     def talk(self, m):
-        m = json.dumps({"event":"client-talk","data":m,"channel":"presence-rpi"})
+        m = json.dumps({"event":"client-talk","data":{"name":"rpi","message":m},"channel":"private-rpi"})
         self.send(m)
     def opened(self):
-	#im = json.dumps({"event":"pusher:subscribe","data":{"channel":"presence-rpi"}})
-        #self.send(m)
-        #def data_provider():
-        #    for i in range(1, 200, 25):
-        #        yield "#" * i
-
-        # for i in range(0, 200, 25):
-        #    print i
-            #self.send("*" * i)
         print 'connected'
     def closed(self, code, reason=None):
         print "Closed down", code, reason
 
     def received_message(self, m):
+        syslog.syslog(str(m))
         print m
 	d = json.loads(str(m))
 
@@ -55,15 +49,9 @@ class DummyClient(WebSocketClient):
 	
 
         if event == 'pusher:connection_established':
-		print type(data)
         	socket_id = data['socket_id']
-        	print 'socket_id ' +socket_id
-		string_to_sign = socket_id +':private-rpi'
-		secret = '76a57ea82e311bcbbb1f'
-		digest = hmac.new(secret, string_to_sign, sha256).hexdigest()
-                print 'digest ', digest
-        	key = '599cb5ed77cd5efb659a'
-        	auth = key +':' +digest
+		resp = urllib2.urlopen('http://52.28.7.161/auth', 'socket_id=' +socket_id +'&channel_name=private-rpi').read()
+                auth = json.loads(resp)['auth']
                 m = json.dumps({"event":"pusher:subscribe","data":{"channel":"private-rpi", "auth":auth}})
         	self.send(m)
 	if msg == "ok":
@@ -77,9 +65,10 @@ class DummyClient(WebSocketClient):
     def handleJsonMessage(self, data):
 	print data
 	if 'message' in data:
-        	print 'found command: ', data['message']
-		all.send(data['message'])
-        	#self.talk("Command handled")
+        	command = json.loads(data['message'])
+        	print 'found command: ', command
+		all.send(command)
+        	self.talk(json.dumps({"handled":command['name']}))
         else:
         	print 'did not find anything'
         	#self.talk("Unknwon command")
@@ -96,7 +85,7 @@ if __name__ == '__main__':
 		syslog.syslog('connecting')
 		try:
 			name = "rpi"
-        		ws = DummyClient('ws://ws.pusherapp.com:80/app/599cb5ed77cd5efb659a?protocol=7&client=rpi&version=0.0.1')
+        		ws = DummyClient('ws://ws.pusherapp.com:80/app/599cb5ed77cd5efb659a?protocol=7&client=rpi&version=0.0.1', None, None, 30)
         		ws.connect()
         		ws.run_forever()
     		except KeyboardInterrupt:

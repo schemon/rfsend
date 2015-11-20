@@ -32,7 +32,7 @@ def HIGH(length, t, dry):
 
 def send(command):
         print command
-
+	print type(command)
 	data = command['payload']
 	cmd = command['command']
 
