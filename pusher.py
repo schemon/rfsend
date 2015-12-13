@@ -10,6 +10,37 @@ import logging.handlers
 import urllib2
 
 class DummyClient(WebSocketClient):
+    @staticmethod
+    def get_config():
+    	return DummyClient.get_db()['config']
+    @staticmethod
+    def get_db():
+	with open ("db", "a+") as db:
+		print 'start load config'
+    		try:
+			data=json.loads(db.read())
+			db.close()
+			if data['id'] and data['config']:
+				print 'file ok'
+			else:
+				print 'file corrupt'
+				data = DummyClient.create_new_config()
+		except:
+			db.close()
+			print 'failed'
+			data = DummyClient.create_new_config()
+		print data
+		return data
+	
+    @staticmethod
+    def create_new_config():
+	with open ("db", "w+") as db:
+		resp = urllib2.urlopen('http://52.28.7.161/device', '').read()
+                data = json.loads(resp)
+    		db.write(resp)
+		return data
+		db.close()
+            
     def run(self):
 	try:
 		super(DummyClient, self).run()	
@@ -25,7 +56,8 @@ class DummyClient(WebSocketClient):
         	print "sent: " +str(m)
         	super(DummyClient, self).send(m)
     def talk(self, m):
-        m = json.dumps({"event":"client-talk","data":{"name":"rpi","message":m},"channel":"private-rpi"})
+	config = self.get_config()
+        m = json.dumps({"event":"client-talk","data":{"name":"rpi","message":m},"channel": config['channel_name']})
         self.send(m)
     def opened(self):
         print 'connected'
@@ -49,10 +81,12 @@ class DummyClient(WebSocketClient):
 	
 
         if event == 'pusher:connection_established':
+		config = self.get_config()
         	socket_id = data['socket_id']
-		resp = urllib2.urlopen('http://52.28.7.161/auth', 'socket_id=' +socket_id +'&channel_name=private-rpi').read()
+                device_token = self.get_db()['id']
+		resp = urllib2.urlopen('http://52.28.7.161/auth', 'deviceToken=' +device_token +'&socket_id=' +socket_id +'&channel_name=' +config['channel_name']).read()
                 auth = json.loads(resp)['auth']
-                m = json.dumps({"event":"pusher:subscribe","data":{"channel":"private-rpi", "auth":auth}})
+                m = json.dumps({"event":"pusher:subscribe","data":{"channel": config['channel_name'], "auth":auth}})
         	self.send(m)
 	if msg == "ok":
 		self.talk("Okidoki...")
@@ -84,8 +118,8 @@ if __name__ == '__main__':
 		print 'connecting'
 		syslog.syslog('connecting')
 		try:
-			name = "rpi"
-        		ws = DummyClient('ws://ws.pusherapp.com:80/app/599cb5ed77cd5efb659a?protocol=7&client=rpi&version=0.0.1', None, None, 30)
+			config = DummyClient.get_config()
+        		ws = DummyClient('ws://ws.pusherapp.com:80/app/' +config['pusher_key'] +'?protocol=7&client=rpi&version=0.0.1', None, None, 30)
         		ws.connect()
         		ws.run_forever()
     		except KeyboardInterrupt:
@@ -100,6 +134,7 @@ if __name__ == '__main__':
 			syslog.syslog(str(e))
 		print 'lost connection'
 		syslog.syslog('lost connection')
+		time.sleep(5)
 	print " Script end"
 	syslog.syslog('all_socket ended')
 
