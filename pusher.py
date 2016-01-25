@@ -34,12 +34,14 @@ class DummyClient(WebSocketClient):
 	
     @staticmethod
     def create_new_config():
+	print 'creating new config'
 	with open ("db", "w+") as db:
-		resp = urllib2.urlopen('http://52.28.7.161/device', '').read()
+		resp = urllib2.urlopen('http://huvuddator.ddns.net/device', '').read()
                 data = json.loads(resp)
     		db.write(resp)
-		return data
 		db.close()
+		print 'created new config'
+		return data
             
     def run(self):
 	try:
@@ -84,8 +86,12 @@ class DummyClient(WebSocketClient):
 		config = self.get_config()
         	socket_id = data['socket_id']
                 device_token = self.get_db()['id']
-		resp = urllib2.urlopen('http://52.28.7.161/auth', 'deviceToken=' +device_token +'&socket_id=' +socket_id +'&channel_name=' +config['channel_name']).read()
-                auth = json.loads(resp)['auth']
+		rawResp = urllib2.urlopen('http://52.28.7.161/auth', 'deviceToken=' +device_token +'&socket_id=' +socket_id +'&channel_name=' +config['channel_name']).read()
+		resp = json.loads(rawResp)
+		if 'result' in resp and resp['result'] == False:
+			DummyClient.create_new_config()
+			raise Exception('Could not authenticate. Config has been recreated')
+                auth = resp['auth']
                 m = json.dumps({"event":"pusher:subscribe","data":{"channel": config['channel_name'], "auth":auth}})
         	self.send(m)
 	if msg == "ok":
