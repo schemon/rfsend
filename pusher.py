@@ -98,15 +98,19 @@ class DummyClient(WebSocketClient):
                 auth = resp['auth']
                 m = json.dumps({"event":"pusher:subscribe","data":{"channel": config['channel_name'], "auth":auth}})
         	self.send(m)
-	if msg == "ok":
-		self.talk("Okidoki...")
+	if msg == "sensor":
+		import serial
+		ser = serial.Serial('/dev/ttyUSB0', 9600)
+		value = ser.readline()
+		print value
+		self.talk(value)
 	if msg == "reboot":
 		command = "/usr/bin/sudo /sbin/shutdown -r now"
 		import subprocess
 		process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
 		output = process.communicate()[0]
 		print output 
-		self.talk(output)
+		self.talk("rebooting...")
 	if msg == "rpi": self.talk("yes?")
 	if msg == "hello": self.talk("hi!")
 
