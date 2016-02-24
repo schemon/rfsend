@@ -76,11 +76,15 @@ class DummyClient(WebSocketClient):
 	try:
 		self.handleJsonMessage(data)
         	print 'handled'
-	except ValueError: 
-		print 'not json'		
-	
-        msg = "empty"
-	
+	except (ValueError, KeyError): 
+		print 'No valid command'		
+
+        try:	
+        	msgRaw = json.loads(data['message'])
+                msg = msgRaw['message']
+	except (ValueError, KeyError):
+        	msg = "empty"
+        print msg
 
         if event == 'pusher:connection_established':
 		config = self.get_config()
@@ -96,9 +100,13 @@ class DummyClient(WebSocketClient):
         	self.send(m)
 	if msg == "ok":
 		self.talk("Okidoki...")
-	if msg == "hi": 
-		1/0
-		self.talk("oh herro!")
+	if msg == "reboot":
+		command = "/usr/bin/sudo /sbin/shutdown -r now"
+		import subprocess
+		process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+		output = process.communicate()[0]
+		print output 
+		self.talk(output)
 	if msg == "rpi": self.talk("yes?")
 	if msg == "hello": self.talk("hi!")
 
