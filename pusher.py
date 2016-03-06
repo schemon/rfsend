@@ -82,9 +82,11 @@ class DummyClient(WebSocketClient):
         try:	
         	msgRaw = json.loads(data['message'])
                 msg = msgRaw['message']
+		name = msgRaw['name']
 	except (ValueError, KeyError):
         	msg = "empty"
         print msg
+	#print name
 
         if event == 'pusher:connection_established':
 		config = self.get_config()
@@ -101,9 +103,11 @@ class DummyClient(WebSocketClient):
 	if msg == "sensor":
 		import serial
 		ser = serial.Serial('/dev/ttyUSB0', 9600)
-		value = ser.readline()
+		ser.flushInput()
+		value = ser.readline().strip()
 		print value
-		self.talk(value)
+		m = json.dumps({"handled":name, "value":value})
+		self.talk(m)
 	if msg == "reboot":
 		command = "/usr/bin/sudo /sbin/shutdown -r now"
 		import subprocess
